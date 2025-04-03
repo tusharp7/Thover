@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 90%;
+        }
+        button {
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>OTP Verification</h2>
+        <input type="text" id="phone" placeholder="+91XXXXXXXXXX" required>
+        <button onclick="sendOTP()">Send OTP</button>
+
+        <input type="text" id="otp" placeholder="Enter OTP" required>
+        <button onclick="verifyOTP()">Verify OTP</button>
+
+        <p id="result"></p>
+    </div>
+
+    <script>
+        async function sendOTP() {
+            let phone = document.getElementById("phone").value.trim();
+
+            // Ensure valid phone number format
+            if (!/^\+\d{10,15}$/.test(phone)) {
+                document.getElementById("result").innerText = "Invalid phone number. Use +91XXXXXXXXXX";
+                return;
+            }
+
+            let response = await fetch("http://localhost:3000/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone })
+            });
+
+            let result = await response.json();
+            document.getElementById("result").innerText = result.message;
+        }
+
+        async function verifyOTP() {
+            let phone = document.getElementById("phone").value.trim();
+            let otp = document.getElementById("otp").value.trim();
+
+            if (!otp) {
+                document.getElementById("result").innerText = "Please enter the OTP";
+                return;
+            }
+
+            let response = await fetch("http://localhost:3000/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone, otp })
+            });
+
+            let result = await response.json();
+            document.getElementById("result").innerText = result.message;
+        }
+    </script>
+
+</body>
+</html>
