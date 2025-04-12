@@ -1,52 +1,36 @@
 require("dotenv").config();
 const express = require("express");
-const twilio = require("twilio");
+const cors = require("cors");
+const connectDB = require('./config/db');
+const errorHandler = require('./middleware/errorHandler');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
+
+// Middleware
 app.use(express.json());
+app.use(cors());
 
-const cors = require("cors");  
-app.use(cors());  
-
-
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-const otpStore = {}; // Store OTPs temporarily
-
-// Send OTP
-app.post("/send-otp", async (req, res) => {
-  const { phone } = req.body;
-  const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
-  otpStore[phone] = otp;
-
-  try {
-    await client.messages.create({
-      body: `Your OTP is ${otp}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
-
-    res.json({ success: true, message: "OTP sent successfully!" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  console.log('Request body:', req.body);
+  next();
 });
 
-// Verify OTP
-app.post("/verify-otp", (req, res) => {
-  const { phone, otp } = req.body;
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
-  if (otpStore[phone] && otpStore[phone] == otp) {
-    delete otpStore[phone]; // Remove OTP after successful verification
-    res.json({ success: true, message: "OTP verified successfully!" });
-  } else {
-    res.status(400).json({ success: false, message: "Invalid OTP" });
-  }
-});
+// Error handling
+app.use(errorHandler);
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+// Connect to database
+connectDB();
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server URL: http://localhost:${PORT}`);
 });
